@@ -1,0 +1,175 @@
+import React from 'react'
+
+{/*
+  ── pipeline-status.mdx ──────────────────────────────────────────────
+  Livrable 1 : version semi-statique
+  Les badges sont dynamiques (chargés depuis GitLab à chaque affichage)
+  mais la structure Domaine/Projet/Composant est déclarée en dur ici.
+
+  Livrable 2 : les styles seront externalisés dans pipeline.module.css
+  Livrable 3 : le bloc "data" sera régénéré automatiquement par le
+               script Python generate_table.py via le CI GitLab
+
+  ⚠️ Seule chose à modifier maintenant : GITLAB et le bloc data ci-dessous
+*/}
+
+{/* ── URL de base de ton GitLab interne ───────────────────────────── */}
+{/* Utilisée pour construire toutes les URLs de badges automatiquement */}
+export const GITLAB = "https://ton-gitlab-interne.fr"
+
+{/* ── Structure des projets à afficher ────────────────────────────── */}
+{/* domaine   : niveau 1 — regroupement métier                        */}
+{/* projets   : niveau 2 — un projet GitLab                           */}
+{/* namespace : chemin GitLab du repo (visible dans l'URL)            */}
+{/* composants: niveau 3 — branches du repo (= versions surveillées)  */}
+{/*                                                                    */}
+{/* ⚠️ MARQUEURS IMPORTANTS : ne pas supprimer les commentaires       */}
+{/* // end-data — utilisés par le script Python pour localiser         */}
+{/* et remplacer ce bloc automatiquement au livrable 3                */}
+export const data = [
+  {
+    "domaine": "DevOps",
+    "projets": [
+      {
+        "nom": "GitLab Core",
+        "namespace": "groupe/gitlab-runner",
+        "composants": ["v1", "v2", "v3"]
+      }
+    ]
+  },
+  {
+    "domaine": "Auth",
+    "projets": [
+      {
+        "nom": "IAM",
+        "namespace": "groupe/auth-service",
+        "composants": ["v1", "v2"]
+      }
+    ]
+  }
+] // end-data
+
+{/* ── Composant React du tableau ───────────────────────────────────── */}
+{/* Génère le tableau HTML depuis la structure data définie ci-dessus  */}
+{/* Les styles sont inline ici (livrable 1) — externalisés au liv. 2  */}
+export const PipelineTable = () => {
+
+  {/* Calcule la liste unique de toutes les versions présentes dans    */}
+  {/* data — ces versions deviennent les colonnes du tableau           */}
+  const versions = [...new Set(
+    data.flatMap(d => d.projets.flatMap(p => p.composants))
+  )]
+
+  return (
+    <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+
+      {/* ── En-tête ── */}
+      <thead>
+        <tr>
+          <th colSpan={5} style={{
+            background:"#f5f5f5", color:"#888", fontWeight:500,
+            fontSize:11, padding:"7px 10px", textAlign:"left",
+            border:"0.5px solid #e0e0e0", textTransform:"uppercase"
+          }}>
+            Domaine / Projet / Composant
+          </th>
+          {/* Une colonne par version/branche trouvée dans data */}
+          {versions.map(v => (
+            <th key={v} style={{
+              background:"#f5f5f5", color:"#888", fontWeight:500,
+              fontSize:11, padding:"7px 10px", textAlign:"center",
+              border:"0.5px solid #e0e0e0", textTransform:"uppercase"
+            }}>
+              {v}
+            </th>
+          ))}
+        </tr>
+      </thead>
+
+      <tbody>
+        {data.map(({ domaine, projets }) => (
+          <React.Fragment key={domaine}>
+
+            {/* ── Ligne domaine : fond violet, trait gauche violet foncé ── */}
+            <tr>
+              <td colSpan={5 + versions.length} style={{
+                background:"#EEEDFE", color:"#3C3489", fontWeight:500,
+                fontSize:13, padding:"8px 12px",
+                borderLeft:"4px solid #534AB7",
+                borderTop:"2px solid #534AB7"
+              }}>
+                {domaine}
+              </td>
+            </tr>
+
+            {projets.map(({ nom, namespace, composants }) => (
+              <React.Fragment key={nom}>
+
+                {/* ── Ligne projet : fond gris, trait gauche violet moyen ── */}
+                <tr>
+                  {/* Cellule d'indentation niveau 1 */}
+                  <td style={{ width:18, background:"#fafafa", borderRight:"none" }}></td>
+                  {/* Trait vertical violet qui relie projet à ses composants */}
+                  <td style={{ width:12, background:"#fafafa", borderLeft:"none", borderRight:"2px solid #AFA9EC" }}></td>
+                  <td colSpan={3 + versions.length} style={{
+                    background:"#fafafa", color:"#666", fontSize:12,
+                    fontStyle:"italic", fontWeight:500,
+                    padding:"6px 10px", borderLeft:"none"
+                  }}>
+                    {nom}
+                  </td>
+                </tr>
+
+                {composants.map(composant => (
+
+                  // ── Ligne composant : fond blanc, trait gauche gris ──
+                  <tr key={composant}>
+                    {/* Indentation niveau 1 */}
+                    <td style={{ width:18, background:"#fff", borderRight:"none" }}></td>
+                    {/* Indentation niveau 2 sans trait (continuation) */}
+                    <td style={{ width:12, background:"#fff", borderLeft:"none", borderRight:"none" }}></td>
+                    {/* Trait vertical gris qui identifie le niveau composant */}
+                    <td style={{ width:12, background:"#fff", borderLeft:"none", borderRight:"2px solid #d0d0d0" }}></td>
+                    {/* Nom du composant en monospace */}
+                    <td colSpan={2} style={{
+                      background:"#fff", borderLeft:"none",
+                      fontFamily:"monospace", fontSize:12, padding:"5px 10px"
+                    }}>
+                      <code>{composant}</code>
+                    </td>
+                    {/* Une cellule badge par version */}
+                    {versions.map(v => (
+                      <td key={v} style={{ textAlign:"center", padding:"5px 8px", background:"#fff" }}>
+                        {composants.includes(v)
+                          ? (
+                            // Badge SVG chargé dynamiquement depuis GitLab
+                            // URL construite : GITLAB / namespace / badges / branche / pipeline.svg
+                            <img
+                              src={`${GITLAB}/${namespace}/badges/${composant}/pipeline.svg`}
+                              alt={`${composant} ${v}`}
+                              style={{ height:20, verticalAlign:"middle" }}
+                            />
+                          )
+                          : <span style={{ color:"#aaa" }}>—</span>
+                        }
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+
+              </React.Fragment>
+            ))}
+
+          </React.Fragment>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+# Statut des pipelines
+
+> Tableau mis à jour automatiquement à chaque build CI.  
+> Les badges reflètent l'état réel des pipelines GitLab.
+
+<PipelineTable />

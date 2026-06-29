@@ -1,0 +1,79 @@
+# .gitlab-ci.yml
+#
+# ── Rôle ─────────────────────────────────────────────────────────────
+# Orchestre les 3 étapes du pipeline dans l'ordre :
+#   1. generate : génère le tableau MDX depuis l'API GitLab
+#   2. build    : compile le site Docusaurus en HTML statique
+#   3. deploy   : publie le site sur GitLab Pages
+#
+# GitLab lit ce fichier automatiquement à chaque push sur le repo.
+# Les étapes s'exécutent dans l'ordre déclaré dans "stages".
+
+stages:
+  - generate
+  - build
+  - deploy
+
+
+# ── Étape 1 : Génération du tableau MDX ──────────────────────────────
+# Lance le script Python qui interroge l'API GitLab et met à jour
+# le bloc "data" dans docs/pipeline-status.mdx
+#
+# Les variables CI_API_V4_URL et CI_JOB_TOKEN sont injectées
+# automatiquement par GitLab — aucune configuration manuelle requise.
+generate-table:
+  stage: generate
+  image: python:3.11-slim          # image Docker minimale avec Python
+
+  script:
+    - pip install requests         # seule dépendance du script
+    - python scripts/generate_table.py
+
+  artifacts:
+    paths:
+      # Rend le fichier MDX généré disponible pour l'étape suivante
+      - docs/pipeline-status.mdx
+    expire_in: 1 hour              # conservé uniquement le temps du pipeline
+
+
+# ── Étape 2 : Build Docusaurus ───────────────────────────────────────
+# Compile le site Docusaurus en HTML statique à partir des fichiers MDX
+# Attend que l'étape generate soit terminée (needs) avant de démarrer
+build-docs:
+  stage: build
+  image: node:20-slim              # image Docker Node.js LTS
+
+  needs:
+    - generate-table               # attend que le .mdx soit prêt
+
+  script:
+    - npm ci                       # installe les dépendances (package-lock.json)
+    - npm run build                # compile Docusaurus → dossier build/
+
+  artifacts:
+    paths:
+      - build/                     # dossier HTML statique pour le déploiement
+
+
+# ── Étape 3 : Déploiement GitLab Pages ───────────────────────────────
+# Publie le site compilé sur GitLab Pages.
+# GitLab Pages exige que le dossier de publication s'appelle "public".
+# Le job doit obligatoirement s'appeler "pages" pour GitLab Pages.
+pages:
+  stage: deploy
+
+  needs:
+    - build-docs                   # attend que le build soit terminé
+
+  script:
+    # Renomme le dossier build/ en public/ (exigence GitLab Pages)
+    - mv build public
+
+  artifacts:
+    paths:
+      - public                     # dossier publié sur GitLab Pages
+
+  only:
+    # Déploie uniquement depuis la branche principale
+    # Évite de publier des builds de branches de feature
+    - main

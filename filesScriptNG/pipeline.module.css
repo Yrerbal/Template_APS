@@ -1,0 +1,129 @@
+/*
+  pipeline.module.css
+  ────────────────────────────────────────────────────────────────────
+  Livrable 2 : styles externalisés du tableau de statut CI/CD.
+  Importé dans pipeline-status.mdx via :
+    import styles from '@site/src/css/pipeline.module.css'
+
+  Les classes sont organisées par niveau hiérarchique :
+    - En-tête du tableau
+    - Ligne Domaine  (niveau 1 — fond violet)
+    - Ligne Projet   (niveau 2 — fond gris clair)
+    - Ligne Composant(niveau 3 — fond blanc)
+    - Cellules badge
+
+  Le principe visuel repose sur trois signaux cumulés :
+    1. Couleur de fond qui descend d'un cran à chaque niveau
+    2. Trait vertical coloré sur le bord gauche de chaque groupe
+    3. Indentation progressive via des cellules vides dédiées
+*/
+
+/* ── En-tête ─────────────────────────────────────────────────────── */
+.th {
+  background: #f5f5f5;
+  color: #888;
+  font-weight: 500;
+  font-size: 11px;
+  padding: 7px 10px;
+  text-align: left;
+  border: 0.5px solid #e0e0e0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.thCenter {
+  composes: th;
+  text-align: center;
+}
+
+/* ── Niveau 1 : Domaine ──────────────────────────────────────────── */
+/* Fond violet clair, trait gauche violet foncé, séparateur en haut  */
+.domain {
+  background: #EEEDFE;
+  color: #3C3489;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-left: 4px solid #534AB7;
+  border-top: 2px solid #534AB7;
+}
+
+/* ── Niveau 2 : Projet ───────────────────────────────────────────── */
+/* Fond gris très léger, trait gauche violet moyen                   */
+
+/* Cellule d'indentation vide (espace avant le trait)                */
+.projIndent {
+  width: 18px;
+  background: #fafafa;
+  border-right: none;
+}
+
+/* Trait vertical violet qui relie visuellement projet et composants */
+.projLine {
+  width: 12px;
+  background: #fafafa;
+  border-left: none;
+  border-right: 2px solid #AFA9EC;
+}
+
+/* Cellule contenant le nom du projet                                */
+.projCell {
+  background: #fafafa;
+  color: #666;
+  font-size: 12px;
+  font-style: italic;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-left: none;
+}
+
+/* ── Niveau 3 : Composant ────────────────────────────────────────── */
+/* Fond blanc, trait gauche gris discret                             */
+
+/* Indentation niveau 1 (alignement avec le projet parent)           */
+.compIndent {
+  width: 18px;
+  background: #fff;
+  border-right: none;
+}
+
+/* Espace entre les deux traits (continuation sans trait visible)     */
+.compLine1 {
+  width: 12px;
+  background: #fff;
+  border-left: none;
+  border-right: none;
+}
+
+/* Trait vertical gris qui identifie le niveau composant             */
+.compLine2 {
+  width: 12px;
+  background: #fff;
+  border-left: none;
+  border-right: 2px solid #d0d0d0;
+}
+
+/* Cellule contenant le nom du composant en monospace                */
+.compCell {
+  background: #fff;
+  border-left: none;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
+/* ── Cellules badges ─────────────────────────────────────────────── */
+/* Cellule avec badge SVG GitLab                                      */
+.badge {
+  text-align: center;
+  padding: 5px 8px;
+  background: #fff;
+}
+
+/* Cellule vide quand la version n'existe pas pour ce composant       */
+.none {
+  text-align: center;
+  color: #aaa;
+  font-size: 12px;
+  background: #fff;
+}
